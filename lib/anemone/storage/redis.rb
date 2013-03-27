@@ -9,7 +9,7 @@ module Anemone
       def initialize(opts = {})
         @redis = ::Redis.new(opts)
         @key_prefix = opts[:key_prefix] || 'anemone'
-        keys.each { |key| delete(key) }
+        clean_stale_data
       end
 
       def [](key)
@@ -64,11 +64,16 @@ module Anemone
       end
 
       def close
+        clean_stale_data
         @redis.quit
       end
 
       private
-
+      
+      def clean_stale_data
+        keys.each { |key| delete(key) }
+      end
+      
       def load_value(hash)
         MARSHAL_FIELDS.each do |field|
           unless hash[field].nil? || hash[field] == ''
